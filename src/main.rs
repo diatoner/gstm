@@ -11,14 +11,20 @@ async fn main() {
         .subcommand(
             SubCommand::with_name("create")
                 .about("Create a new Gist")
-                .arg(Arg::with_name("files").multiple(true).required(true)),
+                .arg(Arg::with_name("files").multiple(true).required(true))
+                .arg(
+                    Arg::with_name("private")
+                        .short("-p")
+                        .long("--private")
+                        .help("Make your new Gist private"),
+                ),
         )
         .get_matches();
 
     match matches.subcommand() {
         ("create", Some(sc)) => {
             let files: Vec<String> = sc.values_of("files").unwrap().map(String::from).collect();
-            let is_public = true;
+            let is_public = sc.is_present("private");
             let description = String::from("lol duh");
             let res = gst::create(files, is_public, description).await;
             match res {
