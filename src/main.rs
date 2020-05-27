@@ -1,12 +1,31 @@
+use clap::{crate_authors, crate_version, App, Arg, SubCommand};
+
 use gst;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    gst::create_gist(
-        vec![String::from("test.gist")],
-        true,
-        String::from("Test 1234"),
-    );
+async fn main() {
+    let matches = App::new("gst")
+        .author(crate_authors!())
+        .version(crate_version!())
+        .about("GitHub Gist manipulator")
+        .subcommand(
+            SubCommand::with_name("create")
+                .about("Create a new Gist")
+                .arg(Arg::with_name("files").multiple(true).required(true)),
+        )
+        .get_matches();
 
-    Ok(())
+    match matches.subcommand() {
+        ("create", Some(sc)) => {
+            let files: Vec<String> = sc.values_of("files").unwrap().map(String::from).collect();
+            let is_public = true;
+            let description = String::from("lol duh");
+            let res = gst::create(files, is_public, description).await;
+            match res {
+                Ok(value) => println!("Gist available at {}", value.html_url),
+                Err(e) => println!("An error occurred:\n\t{:?}", e),
+            };
+        }
+        _ => {}
+    }
 }
