@@ -1,5 +1,5 @@
 [package]
-name = "gst"
+name = "gstm"
 version = "0.1.0"
 authors = ["four0000four <tom@fourzerofour.pw>"]
 edition = "2018"

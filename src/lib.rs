@@ -52,7 +52,7 @@ pub async fn create(
     let req = client
         .post(url)
         .json(&payload)
-        .header("user-agent", "gst")
+        .header("user-agent", "gstm")
         .header("authorization", format!("token {}", token));
 
     // Await API response

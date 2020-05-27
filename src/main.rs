@@ -1,14 +1,14 @@
 use chrono::DateTime;
 use clap::{crate_authors, crate_version, App, Arg, SubCommand};
 
-use gst;
+use gstm;
 
 #[tokio::main]
 async fn main() {
-    let matches = App::new("gst")
+    let matches = App::new("gstm")
         .author(crate_authors!())
         .version(crate_version!())
-        .about("GitHub Gist manipulator")
+        .about("Gist manipulator")
         .subcommands(vec![
             SubCommand::with_name("create")
                 .about("Create a new Gist")
@@ -61,7 +61,7 @@ async fn main() {
                 Some(s) => Some(String::from(s)),
                 None => None,
             };
-            let res = gst::create(files, is_public, description).await;
+            let res = gstm::create(files, is_public, description).await;
             match res {
                 Ok(value) => println!("Gist available at {}", value.html_url),
                 Err(e) => println!("An error occurred:\n\t{:?}", e),
@@ -80,7 +80,7 @@ async fn main() {
             //     Some(s) => Some(s.parse::<i32>().unwrap()),
             //     None => None,
             // };
-            gst::list(user, since).await;
+            gstm::list(user, since).await;
         }
         _ => {}
     }
