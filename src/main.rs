@@ -17,6 +17,13 @@ async fn main() {
                         .short("-p")
                         .long("--private")
                         .help("Make your new Gist private"),
+                )
+                .arg(
+                    Arg::with_name("description")
+                        .short("-d")
+                        .long("--description")
+                        .takes_value(true)
+                        .help("The description of your Gist"),
                 ),
         )
         .get_matches();
@@ -25,7 +32,10 @@ async fn main() {
         ("create", Some(sc)) => {
             let files: Vec<String> = sc.values_of("files").unwrap().map(String::from).collect();
             let is_public = sc.is_present("private");
-            let description = String::from("lol duh");
+            let description = match sc.value_of("description") {
+                Some(s) => Some(String::from(s)),
+                None => None,
+            };
             let res = gst::create(files, is_public, description).await;
             match res {
                 Ok(value) => println!("Gist available at {}", value.html_url),

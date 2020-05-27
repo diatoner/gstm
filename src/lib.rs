@@ -23,7 +23,7 @@ pub struct CreateGistResponsePayload {
 pub async fn create(
     files: Vec<String>,
     is_public: bool,
-    description: String,
+    description: Option<String>,
 ) -> Result<CreateGistResponsePayload, Box<dyn std::error::Error>> {
     // filepaths: Vec<String> => textContentsByFilepath: HashMap<String, String>
     let mut payload_map = std::collections::HashMap::new();
@@ -36,7 +36,10 @@ pub async fn create(
 
     // Set up JSON payload for create operation
     let payload = CreateGistPayload {
-        description,
+        description: match description {
+            Some(d) => d,
+            None => String::from(""),
+        },
         public: is_public,
         files: payload_map,
     };
