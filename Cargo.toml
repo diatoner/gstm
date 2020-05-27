@@ -1,5 +1,5 @@
 [package]
-name = "mkgtok"
+name = "gst"
 version = "0.1.0"
 authors = ["four0000four <tom@fourzerofour.pw>"]
 edition = "2018"
@@ -11,3 +11,4 @@ reqwest = { version = "0.10", features = ["json"] }
 tokio = { version = "0.2", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+clap = "2.33.1"
