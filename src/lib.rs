@@ -1,5 +1,6 @@
 use std::io::prelude::*;
 
+use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Debug)]
@@ -62,4 +63,18 @@ pub async fn create(
 
     // Return parsed response, as struct
     Ok(json)
+}
+
+pub async fn list(
+    by_user: Option<String>,
+    since: Option<DateTime<chrono::FixedOffset>>,
+    // count: Option<i32>, TODO implement pagination
+) {
+    let endpoint = match by_user {
+        Some(uname) => format!("https://api.github.com/users/{}/gists", uname),
+        None => String::from("https://api.github.com/gists/public"),
+    };
+    println!("endpoint: {}", endpoint);
+    println!("since: {:?}", since);
+    // println!("count: {:?}", count);
 }
