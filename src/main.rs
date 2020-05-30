@@ -1,5 +1,6 @@
 use chrono::DateTime;
 use clap::{crate_authors, crate_version, App, Arg, SubCommand};
+use futures::prelude::*;
 
 use gstm;
 
@@ -80,7 +81,10 @@ async fn main() {
             //     Some(s) => Some(s.parse::<i32>().unwrap()),
             //     None => None,
             // };
-            gstm::list(user, since).await;
+            let mut r = gstm::list::list(user, since);
+            while let Some(x) = r.next().await {
+                println!("{:?}", x);
+            }
         }
         _ => {}
     }
