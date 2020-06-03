@@ -1,6 +1,5 @@
 use chrono::DateTime;
 use clap::{crate_authors, crate_version, App, Arg, SubCommand};
-use futures::prelude::*;
 
 use gstm;
 
@@ -77,13 +76,20 @@ async fn main() {
                 Some(s) => Some(DateTime::parse_from_rfc3339(s).unwrap()),
                 None => None,
             };
-            // let count = match sc.value_of("count") {
-            //     Some(s) => Some(s.parse::<i32>().unwrap()),
-            //     None => None,
-            // };
-            let mut r = gstm::list::list(user, since);
-            while let Some(x) = r.next().await {
-                println!("{:?}", x);
+            let gists = gstm::list::list(user, since).await;
+            match gists {
+                Ok(gs) => {
+                    for g in gs {
+                        let mut short_description = String::from(g.description);
+                        short_description.truncate(80);
+                        short_description = short_description.replace("\n", " ");
+                        println!(
+                            "{} {} {} {}",
+                            g.created_at, g.owner.login, g.id, short_description
+                        )
+                    }
+                }
+                Err(e) => panic!("{:?}", e),
             }
         }
         _ => {}
