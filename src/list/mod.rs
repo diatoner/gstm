@@ -13,10 +13,10 @@ pub struct User {
 pub struct Gist {
     pub url: String,
     pub id: String,
-    pub description: String,
+    pub description: Option<String>,
     pub public: bool,
     pub created_at: String,
-    pub owner: User,
+    pub owner: Option<User>,
 }
 
 pub async fn list(
@@ -30,5 +30,8 @@ pub async fn list(
     let client = Client::new();
     let req = client.get(endpoint.as_str()).header("user-agent", "gstm");
     let res = req.send().await?;
+    // TODO catch-all handling of API rate limiting, so we can feed through that.
+    //  (Can we _attempt_ to parse as our intended result, and if it fails,
+    //   then _attempt_ to parse as a rate limiting message?)
     res.json::<Vec<Gist>>().await
 }

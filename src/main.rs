@@ -1,7 +1,7 @@
 use chrono::DateTime;
 use clap::{crate_authors, crate_version, App, Arg, SubCommand};
 
-use log::{debug, error, info, trace, warn};
+use log;
 
 use gstm;
 
@@ -62,11 +62,6 @@ async fn main() {
         .get_matches();
 
     loggerv::init_with_verbosity(matches.occurrences_of("verbosity")).unwrap();
-    error!("This is always printed");
-    warn!("This too is always printed to stderr");
-    info!("This is optionally printed to stdout"); // for ./app -v or higher
-    debug!("This is optionally printed to stdout"); // for ./app -vv or higher
-    trace!("This is optionally printed to stdout"); // for ./app -vvv
 
     match matches.subcommand() {
         ("create", Some(sc)) => {
@@ -79,7 +74,7 @@ async fn main() {
             let res = gstm::create(files, is_public, description).await;
             match res {
                 Ok(value) => println!("Gist available at {}", value.html_url),
-                Err(e) => println!("An error occurred:\n\t{:?}", e),
+                Err(e) => log::error!("Gist creation failed:\n\t{:?}", e),
             };
         }
         ("list", Some(sc)) => {
@@ -95,16 +90,35 @@ async fn main() {
             match gists {
                 Ok(gs) => {
                     for g in gs {
-                        let mut short_description = String::from(g.description);
-                        short_description.truncate(80);
-                        short_description = short_description.replace("\n", " ");
-                        println!(
-                            "{} {} {} {}",
-                            g.created_at, g.owner.login, g.id, short_description
-                        )
+                        // TODO Accurate method of printing w/ variable length truncation
+                        let description = match g.description {
+                            Some(d) => {
+                                let mut desc = d.replace("\n", " ");
+                                let max_description_length = {
+                                    if let Some((w, _)) = term_size::dimensions() {
+                                        w / 3
+                                    } else {
+                                        40
+                                    }
+                                };
+                                if desc.len() > max_description_length {
+                                    desc.truncate(max_description_length);
+                                    desc.push_str("...");
+                                }
+                                desc
+                            }
+                            _ => String::new(),
+                        };
+
+                        let username = match g.owner {
+                            Some(o) => o.login,
+                            _ => String::new(),
+                        };
+
+                        println!("{} {} {} {}", g.created_at, username, g.id, description);
                     }
                 }
-                Err(e) => panic!("{:?}", e),
+                Err(e) => log::error!("Retrieving gist listing failed:\n\t{:?}", e),
             }
         }
         _ => {}
