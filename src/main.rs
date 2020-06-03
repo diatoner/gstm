@@ -1,6 +1,8 @@
 use chrono::DateTime;
 use clap::{crate_authors, crate_version, App, Arg, SubCommand};
 
+use log::{debug, error, info, trace, warn};
+
 use gstm;
 
 #[tokio::main]
@@ -51,7 +53,20 @@ async fn main() {
                 //         .help("Retrieve [count] many values."),
                 // )
         ])
+        .arg(Arg::with_name("verbosity")
+            .short("v")
+            .long("verbosity")
+            .multiple(true)
+            .help("Sets the level of verbosity")
+        )
         .get_matches();
+
+    loggerv::init_with_verbosity(matches.occurrences_of("verbosity")).unwrap();
+    error!("This is always printed");
+    warn!("This too is always printed to stderr");
+    info!("This is optionally printed to stdout"); // for ./app -v or higher
+    debug!("This is optionally printed to stdout"); // for ./app -vv or higher
+    trace!("This is optionally printed to stdout"); // for ./app -vvv
 
     match matches.subcommand() {
         ("create", Some(sc)) => {
