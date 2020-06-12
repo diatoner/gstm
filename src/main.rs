@@ -43,7 +43,7 @@ async fn main() {
                         .long("--since")
                         .takes_value(true)
                         .help("Limit to Gists uploaded after an RFC 3339 (ISO 8601) timestamp (YYYY-MM-DDTHH:MM:SSZ)"),
-                )
+                ),
                 // .arg( TODO implement pagination
                 //     Arg::with_name("count")
                 //         .short("-c")
@@ -52,6 +52,25 @@ async fn main() {
                 //         .default_value("3000")
                 //         .help("Retrieve [count] many values."),
                 // )
+            SubCommand::with_name("get")
+                .about("Retrieve the content of a single Gist")
+                .arg(
+                    Arg::with_name("id")
+                    .required(true)
+                    .help("The ID of the given Gist")
+                )
+                .arg(
+                    Arg::with_name("greedy")
+                    .short("-g")
+                    .long("--greedy")
+                    .help("Attempt to retrieve files larger than 1MB in size")
+                )
+                .arg(
+                    Arg::with_name("destination")
+                    .short("-d")
+                    .long("--destination")
+                    .help("Write to a directory, rather than stdout. Implies -g")
+                )
         ])
         .arg(Arg::with_name("verbosity")
             .short("v")
@@ -63,64 +82,80 @@ async fn main() {
 
     loggerv::init_with_verbosity(matches.occurrences_of("verbosity")).unwrap();
 
+    handle_matches(matches).await;
+}
+
+async fn handle_matches(matches: clap::ArgMatches<'_>) {
     match matches.subcommand() {
-        ("create", Some(sc)) => {
-            let files: Vec<String> = sc.values_of("files").unwrap().map(String::from).collect();
-            let is_public = sc.is_present("private");
-            let description = match sc.value_of("description") {
-                Some(s) => Some(String::from(s)),
-                None => None,
-            };
-            let res = gstm::create(files, is_public, description).await;
-            match res {
-                Ok(value) => println!("Gist available at {}", value.html_url),
-                Err(e) => log::error!("Gist creation failed:\n\t{:?}", e),
-            };
-        }
-        ("list", Some(sc)) => {
-            let user = match sc.value_of("user") {
-                Some(s) => Some(String::from(s)),
-                None => None,
-            };
-            let since = match sc.value_of("since") {
-                Some(s) => Some(DateTime::parse_from_rfc3339(s).unwrap()),
-                None => None,
-            };
-            let gists = gstm::list::list(user, since).await;
-            match gists {
-                Ok(gs) => {
-                    for g in gs {
-                        // TODO Accurate method of printing w/ variable length truncation
-                        let description = match g.description {
-                            Some(d) => {
-                                let mut desc = d.replace("\n", " ");
-                                let max_description_length = {
-                                    if let Some((w, _)) = term_size::dimensions() {
-                                        w / 3
-                                    } else {
-                                        40
-                                    }
-                                };
-                                if desc.len() > max_description_length {
-                                    desc.truncate(max_description_length);
-                                    desc.push_str("...");
-                                }
-                                desc
-                            }
-                            _ => String::new(),
-                        };
+        ("create", Some(sc)) => handle_create_command(sc).await,
+        ("list", Some(sc)) => handle_list_command(sc).await,
+        ("get", Some(sc)) => {
+            let _id = String::from(sc.value_of("id").unwrap());
 
-                        let username = match g.owner {
-                            Some(o) => o.login,
-                            _ => String::new(),
-                        };
+            // TODO GET the Gist with the given ID as a list of files w/ content
+            // If this fails, error out here.
 
-                        println!("{} {} {} {}", g.created_at, username, g.id, description);
-                    }
-                }
-                Err(e) => log::error!("Retrieving gist listing failed:\n\t{:?}", e),
-            }
+            // TODO Carry out un-truncation here, if greedy or non-stdout
+
+            // TODO write either to stdout or files in a dir
+            // If stdout: how to break between files?
+            // If to a directory: error if it doesn't exist
         }
         _ => {}
+    }
+}
+
+async fn handle_create_command(sc: &clap::ArgMatches<'_>) {
+    // Parse input
+    let files: Vec<String> = sc.values_of("files").unwrap().map(String::from).collect();
+    let is_public: bool = sc.is_present("private");
+    let description: Option<String> = sc.value_of("description").map(|x| x.to_string()).take();
+    // Process parsed input
+    let res: Result<gstm::Gist, _> = gstm::create(files, is_public, description).await;
+    // Print output
+    match res {
+        Ok(value) => println!("Gist available at {}", value.html_url),
+        Err(e) => log::error!("Gist creation failed:\n\t{:?}", e),
+    };
+}
+
+async fn handle_list_command(sc: &clap::ArgMatches<'_>) {
+    // Parse input
+    let user = sc.value_of("user").map(|x| x.to_string()).take();
+    let since = sc
+        .value_of("since")
+        .map(|x| DateTime::parse_from_rfc3339(x).unwrap())
+        .take();
+    // Process input
+    let gists = gstm::list(user, since).await;
+    // Show output
+    match gists {
+        Ok(gs) => {
+            for g in gs {
+                // TODO Accurate method of printing w/ variable length truncation
+                let description = match g.description {
+                    Some(d) => {
+                        let mut desc = d.replace("\n", " ");
+                        let max_description_length = {
+                            if let Some((w, _)) = term_size::dimensions() {
+                                w / 3
+                            } else {
+                                40
+                            }
+                        };
+                        if desc.len() > max_description_length {
+                            desc.truncate(max_description_length);
+                            desc.push_str("...");
+                        }
+                        desc
+                    }
+                    _ => String::new(),
+                };
+
+                let username: String = g.owner.map_or(String::new(), |o| o.login);
+                println!("{} {} {} {}", g.created_at, username, g.id, description);
+            }
+        }
+        Err(e) => log::error!("Retrieving gist listing failed:\n\t{:?}", e),
     }
 }
