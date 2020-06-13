@@ -4,6 +4,15 @@ use std::io::prelude::*;
 use chrono::{DateTime, FixedOffset};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("GitHub responded with a HTTP status of {status}")]
+    APIError { status: String },
+    #[error("Network and parsing request failed")]
+    RequestError(#[from] reqwest::Error),
+}
 
 #[derive(Deserialize)]
 pub struct User {
