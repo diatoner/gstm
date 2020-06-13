@@ -82,6 +82,12 @@ async fn main() {
                     .takes_value(true)
                     .help("Optional delimiter between file text, if sent to stdout")
                 )
+                .arg(
+                    Arg::with_name("no-content")
+                    .short("-c")
+                    .long("--no-content")
+                    .help("Hide the text of any file from output; meta only")
+                )
         ])
         .arg(Arg::with_name("verbosity")
             .short("v")
@@ -168,14 +174,15 @@ async fn handle_list_command(sc: &clap::ArgMatches<'_>) {
 
 async fn handle_get_command(sc: &ArgMatches<'_>) {
     let id = String::from(sc.value_of("id").unwrap());
-    let is_greedy = sc.is_present("greedy");
     let fs_dest = sc.value_of("output");
+    let is_greedy = sc.is_present("greedy") || fs_dest.is_some();
+    let no_content = sc.is_present("no-content");
     let delimiter = sc.value_of("delimiter").unwrap_or("\n");
 
     let gist = gstm::get(id).await.unwrap();
     let mut files = gist.files;
 
-    if is_greedy || fs_dest.is_some() {
+    if !no_content && is_greedy {
         log::debug!("Truncation requirement recognised. Iterating for truncation");
         let client = reqwest::Client::new();
         for (filename, file) in files.iter_mut() {
@@ -198,7 +205,10 @@ async fn handle_get_command(sc: &ArgMatches<'_>) {
             file.language.as_ref().unwrap(),
             file.size
         );
-        let body = file.content.as_ref().unwrap();
+        let body = match no_content {
+            false => file.content.as_ref().unwrap(),
+            true => "",
+        };
         let output = format!("{}\n{}{}", header, body, delimiter);
         match fs_dest {
             Some(dst) => {
