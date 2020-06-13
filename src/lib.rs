@@ -5,26 +5,27 @@ use chrono::{DateTime, FixedOffset};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-pub mod list;
-
 #[derive(Deserialize, Debug)]
 pub struct User {
-    pub login: String,
+    pub login: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct File {
-    pub content: String,
+    pub filename: Option<String>,
+    pub language: Option<String>,
+    pub content: Option<String>,
+    pub size: usize,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Gist {
-    pub url: String,
-    pub html_url: String,
-    pub id: String,
+    pub url: Option<String>,
+    pub html_url: Option<String>,
+    pub id: Option<String>,
     pub description: Option<String>,
     pub public: bool,
-    pub created_at: String,
+    pub created_at: Option<String>,
     pub owner: Option<User>,
     pub files: HashMap<String, File>,
 }

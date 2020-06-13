@@ -114,7 +114,7 @@ async fn handle_create_command(sc: &clap::ArgMatches<'_>) {
     let res: Result<gstm::Gist, _> = gstm::create(files, is_public, description).await;
     // Print output
     match res {
-        Ok(value) => println!("Gist available at {}", value.html_url),
+        Ok(value) => println!("Gist available at {}", value.html_url.unwrap()),
         Err(e) => log::error!("Gist creation failed:\n\t{:?}", e),
     };
 }
@@ -152,8 +152,14 @@ async fn handle_list_command(sc: &clap::ArgMatches<'_>) {
                     _ => String::new(),
                 };
 
-                let username: String = g.owner.map_or(String::new(), |o| o.login);
-                println!("{} {} {} {}", g.created_at, username, g.id, description);
+                let username: String = g.owner.map_or(String::new(), |o| o.login.unwrap());
+                println!(
+                    "{} {} {} {}",
+                    g.created_at.unwrap(),
+                    username,
+                    g.id.unwrap(),
+                    description
+                );
             }
         }
         Err(e) => log::error!("Retrieving gist listing failed:\n\t{:?}", e),
