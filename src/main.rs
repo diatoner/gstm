@@ -179,8 +179,12 @@ async fn handle_get_command(sc: &ArgMatches<'_>) {
     let no_content = sc.is_present("no-content");
     let delimiter = sc.value_of("delimiter").unwrap_or("\n");
 
-    let gist = gstm::get(id).await.unwrap();
-    let mut files = gist.files;
+    let gist = gstm::get(id.clone()).await;
+    if let Err(e) = gist {
+        log::error!("Failed to get {}:\n\t{}", id, e);
+        return;
+    }
+    let mut files = gist.unwrap().files;
 
     if !no_content && is_greedy {
         log::debug!("Truncation requirement recognised. Iterating for truncation");
