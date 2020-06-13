@@ -1,5 +1,5 @@
 use chrono::DateTime;
-use clap::{crate_authors, crate_version, App, Arg, SubCommand};
+use clap::{crate_authors, crate_version, App, Arg, ArgMatches, SubCommand};
 
 use log;
 
@@ -85,22 +85,11 @@ async fn main() {
     handle_matches(matches).await;
 }
 
-async fn handle_matches(matches: clap::ArgMatches<'_>) {
+async fn handle_matches(matches: ArgMatches<'_>) {
     match matches.subcommand() {
         ("create", Some(sc)) => handle_create_command(sc).await,
         ("list", Some(sc)) => handle_list_command(sc).await,
-        ("get", Some(sc)) => {
-            let _id = String::from(sc.value_of("id").unwrap());
-
-            // TODO GET the Gist with the given ID as a list of files w/ content
-            // If this fails, error out here.
-
-            // TODO Carry out un-truncation here, if greedy or non-stdout
-
-            // TODO write either to stdout or files in a dir
-            // If stdout: how to break between files?
-            // If to a directory: error if it doesn't exist
-        }
+        ("get", Some(sc)) => handle_get_command(sc).await,
         _ => {}
     }
 }
@@ -162,6 +151,23 @@ async fn handle_list_command(sc: &clap::ArgMatches<'_>) {
                 );
             }
         }
-        Err(e) => log::error!("Retrieving gist listing failed:\n\t{:?}", e),
+        Err(e) => log::error!("Error retrieving git listing:\n\t{:?}", e),
     }
+}
+
+async fn handle_get_command(sc: &ArgMatches<'_>) {
+    let _id = String::from(sc.value_of("id").unwrap());
+    let _is_greedy = sc.is_present("greedy");
+    let _fs_dest = sc.value_of("destination");
+
+    // TODO GET the Gist with the given ID as a list of files w/ content
+    // If this fails, error out here.
+    let gist = gstm::get(_id).await;
+
+    println!("{:?}", gist);
+    // TODO Carry out un-truncation here, if greedy or non-stdout
+
+    // TODO write either to stdout or files in a dir
+    // If stdout: how to break between files?
+    // If to a directory: error if it doesn't exist
 }
