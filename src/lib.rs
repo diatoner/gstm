@@ -12,10 +12,12 @@ pub struct User {
 
 #[derive(Deserialize, Debug)]
 pub struct File {
+    pub raw_url: Option<String>,
     pub filename: Option<String>,
     pub language: Option<String>,
     pub content: Option<String>,
     pub size: usize,
+    pub truncated: Option<bool>,
 }
 
 #[derive(Deserialize, Debug)]
