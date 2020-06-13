@@ -121,7 +121,7 @@ async fn handle_create_command(sc: &clap::ArgMatches<'_>) {
     // Print output
     match res {
         Ok(value) => println!("Gist available at {}", value.html_url.unwrap()),
-        Err(e) => log::error!("Gist creation failed:\n\t{:?}", e),
+        Err(e) => log::error!("Gist creation failed: {}", e),
     };
 }
 
@@ -168,7 +168,7 @@ async fn handle_list_command(sc: &clap::ArgMatches<'_>) {
                 );
             }
         }
-        Err(e) => log::error!("Error retrieving git listing:\n\t{:?}", e),
+        Err(e) => log::error!("Error retrieving git listing: {}", e),
     }
 }
 
@@ -181,7 +181,7 @@ async fn handle_get_command(sc: &ArgMatches<'_>) {
 
     let gist = gstm::get(id.clone()).await;
     if let Err(e) = gist {
-        log::error!("Failed to get {}:\n\t{}", id, e);
+        log::error!("Failed to get {}: {}", id, e);
         return;
     }
     let mut files = gist.unwrap().files;
@@ -222,7 +222,7 @@ async fn handle_get_command(sc: &ArgMatches<'_>) {
                 log::debug!("Writing to {}", filepath);
                 match f.write_all(file.content.as_ref().unwrap().as_bytes()) {
                     Ok(_) => log::info!("{} written", filepath),
-                    Err(e) => log::error!("Could not write to {}:\n\t{}", filepath, e),
+                    Err(e) => log::error!("Could not write to {}: {}", filepath, e),
                 }
             }
             None => println!("{}", output),
