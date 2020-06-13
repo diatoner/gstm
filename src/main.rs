@@ -1,3 +1,6 @@
+use std::fs::File;
+use std::io::prelude::*;
+
 use chrono::DateTime;
 use clap::{crate_authors, crate_version, App, Arg, ArgMatches, SubCommand};
 
@@ -66,10 +69,18 @@ async fn main() {
                     .help("Attempt to retrieve files larger than 1MB in size")
                 )
                 .arg(
-                    Arg::with_name("destination")
-                    .short("-d")
-                    .long("--destination")
+                    Arg::with_name("output")
+                    .short("-o")
+                    .long("--output")
+                    .takes_value(true)
                     .help("Write to a directory, rather than stdout. Implies -g")
+                )
+                .arg(
+                    Arg::with_name("delimiter")
+                    .short("-d")
+                    .long("--delimiter")
+                    .takes_value(true)
+                    .help("Optional delimiter between file text, if sent to stdout")
                 )
         ])
         .arg(Arg::with_name("verbosity")
@@ -156,18 +167,51 @@ async fn handle_list_command(sc: &clap::ArgMatches<'_>) {
 }
 
 async fn handle_get_command(sc: &ArgMatches<'_>) {
-    let _id = String::from(sc.value_of("id").unwrap());
-    let _is_greedy = sc.is_present("greedy");
-    let _fs_dest = sc.value_of("destination");
+    let id = String::from(sc.value_of("id").unwrap());
+    let is_greedy = sc.is_present("greedy");
+    let fs_dest = sc.value_of("output");
+    let delimiter = sc.value_of("delimiter").unwrap_or("\n");
 
-    // TODO GET the Gist with the given ID as a list of files w/ content
-    // If this fails, error out here.
-    let gist = gstm::get(_id).await;
+    let gist = gstm::get(id).await.unwrap();
+    let mut files = gist.files;
 
-    println!("{:?}", gist);
-    // TODO Carry out un-truncation here, if greedy or non-stdout
+    if is_greedy || fs_dest.is_some() {
+        log::debug!("Truncation requirement recognised. Iterating for truncation");
+        let client = reqwest::Client::new();
+        for (filename, file) in files.iter_mut() {
+            if file.truncated.unwrap() {
+                let endpoint = file.raw_url.as_ref().unwrap();
+                log::debug!("{} truncated, downloading from {}", filename, endpoint);
+                let req = client.get(endpoint.as_str()).header("user-agent", "gstm");
+                let res = req.send().await.unwrap();
+                let content = res.text().await;
+                file.content = content.ok();
+                log::debug!("Contents updated for {}", filename);
+            }
+        }
+    }
 
-    // TODO write either to stdout or files in a dir
-    // If stdout: how to break between files?
-    // If to a directory: error if it doesn't exist
+    for (filename, file) in files.iter() {
+        let header = format!(
+            "{} {} {}",
+            filename,
+            file.language.as_ref().unwrap(),
+            file.size
+        );
+        let body = file.content.as_ref().unwrap();
+        let output = format!("{}\n{}{}", header, body, delimiter);
+        match fs_dest {
+            Some(dst) => {
+                let filepath = format!("{}/{}", dst, filename);
+                log::debug!("Creating {}", filepath);
+                let mut f = File::create(&filepath).unwrap();
+                log::debug!("Writing to {}", filepath);
+                match f.write_all(file.content.as_ref().unwrap().as_bytes()) {
+                    Ok(_) => log::info!("{} written", filepath),
+                    Err(e) => log::error!("Could not write to {}:\n\t{}", filepath, e),
+                }
+            }
+            None => println!("{}", output),
+        }
+    }
 }
