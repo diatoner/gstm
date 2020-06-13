@@ -91,8 +91,18 @@ pub async fn list(
     let client = Client::new();
     let req = client.get(endpoint.as_str()).header("user-agent", "gstm");
     let res = req.send().await?;
+
     // TODO catch-all handling of API rate limiting, so we can feed through that.
     //  (Can we _attempt_ to parse as our intended result, and if it fails,
     //   then _attempt_ to parse as a rate limiting message?)
+
     res.json::<Vec<Gist>>().await
+}
+
+pub async fn get(_id: String) -> reqwest::Result<Gist> {
+    let endpoint = format!("https://api.github.com/gists/{}", _id);
+    let client = Client::new();
+    let req = client.get(endpoint.as_str()).header("user-agent", "gstm");
+    let res = req.send().await?;
+    res.json::<Gist>().await
 }
