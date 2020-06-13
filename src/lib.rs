@@ -5,12 +5,12 @@ use chrono::{DateTime, FixedOffset};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct User {
     pub login: Option<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct File {
     pub raw_url: Option<String>,
     pub filename: Option<String>,
@@ -20,7 +20,7 @@ pub struct File {
     pub truncated: Option<bool>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct Gist {
     pub url: Option<String>,
     pub html_url: Option<String>,
