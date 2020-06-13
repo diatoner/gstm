@@ -94,7 +94,7 @@ pub async fn create(
 pub async fn list(
     by_user: Option<String>,
     _since: Option<DateTime<FixedOffset>>,
-) -> reqwest::Result<Vec<Gist>> {
+) -> Result<Vec<Gist>, Error> {
     let endpoint = match by_user {
         Some(uname) => format!("https://api.github.com/users/{}/gists", uname),
         None => String::from("https://api.github.com/gists/public"),
@@ -106,14 +106,23 @@ pub async fn list(
     // TODO catch-all handling of API rate limiting, so we can feed through that.
     //  (Can we _attempt_ to parse as our intended result, and if it fails,
     //   then _attempt_ to parse as a rate limiting message?)
-
-    res.json::<Vec<Gist>>().await
+    match res.status() {
+        reqwest::StatusCode::OK => res.json::<Vec<Gist>>().await.map_err(Error::RequestError),
+        s => Err(Error::APIError {
+            status: format!("{} {}", s.as_str(), s.canonical_reason().unwrap_or("")),
+        }),
+    }
 }
 
-pub async fn get(_id: String) -> reqwest::Result<Gist> {
+pub async fn get(_id: String) -> Result<Gist, Error> {
     let endpoint = format!("https://api.github.com/gists/{}", _id);
     let client = Client::new();
     let req = client.get(endpoint.as_str()).header("user-agent", "gstm");
     let res = req.send().await?;
-    res.json::<Gist>().await
+    match res.status() {
+        reqwest::StatusCode::OK => res.json::<Gist>().await.map_err(Error::RequestError),
+        s => Err(Error::APIError {
+            status: format!("{} {}", s.as_str(), s.canonical_reason().unwrap_or("")),
+        }),
+    }
 }
