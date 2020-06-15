@@ -37,5 +37,25 @@ git clone https://github.com/four0000four/gstm.git && \
 
 ### Usage
 
-You can see the `create` subcommand illustrated above; other features are
-coming soon. Pull requests are welcome!
+```
+gstm 0.1.0
+four0000four <tom@fourzerofour.pw>
+Gist manipulator
+
+USAGE:
+gstm [FLAGS] [SUBCOMMAND]
+
+FLAGS:
+-h, --help         Prints help information
+-V, --version      Prints version information
+-v, --verbosity    Sets the level of verbosity
+
+SUBCOMMANDS:
+create    Create a new Gist
+get       Retrieve the content of a single Gist
+help      Prints this message or the help of the given subcommand(s)
+list      Retrieve a listing of Gists
+```
+
+This is the output of `gstm --help`. Each subcommand has additional
+flags and arguments, not detailed here.
