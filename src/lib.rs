@@ -117,11 +117,13 @@ pub async fn list(
     let req = client.get(endpoint.as_str()).header("user-agent", "gstm");
     let res = req.send().await?;
 
-    match res.status() {
-        reqwest::StatusCode::OK => res.json::<Vec<Gist>>().await.map_err(Error::RequestError),
-        s => Err(Error::APIError {
+    let s = res.status();
+    if s.is_success() {
+        res.json::<Vec<Gist>>().await.map_err(Error::RequestError)
+    } else {
+        Err(Error::APIError {
             status: format!("{} {}", s.as_str(), s.canonical_reason().unwrap_or("")),
-        }),
+        })
     }
 }
 
@@ -130,10 +132,12 @@ pub async fn get(_id: String) -> Result<Gist, Error> {
     let client = Client::new();
     let req = client.get(endpoint.as_str()).header("user-agent", "gstm");
     let res = req.send().await?;
-    match res.status() {
-        reqwest::StatusCode::OK => res.json::<Gist>().await.map_err(Error::RequestError),
-        s => Err(Error::APIError {
+    let s = res.status();
+    if s.is_success() {
+        res.json::<Gist>().await.map_err(Error::RequestError)
+    } else {
+        Err(Error::APIError {
             status: format!("{} {}", s.as_str(), s.canonical_reason().unwrap_or("")),
-        }),
+        })
     }
 }
