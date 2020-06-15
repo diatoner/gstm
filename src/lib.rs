@@ -115,9 +115,6 @@ pub async fn list(
     let req = client.get(endpoint.as_str()).header("user-agent", "gstm");
     let res = req.send().await?;
 
-    // TODO catch-all handling of API rate limiting, so we can feed through that.
-    //  (Can we _attempt_ to parse as our intended result, and if it fails,
-    //   then _attempt_ to parse as a rate limiting message?)
     match res.status() {
         reqwest::StatusCode::OK => res.json::<Vec<Gist>>().await.map_err(Error::RequestError),
         s => Err(Error::APIError {
