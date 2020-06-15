@@ -12,6 +12,8 @@ pub enum Error {
     APIError { status: String },
     #[error("Network and parsing request failed")]
     RequestError(#[from] reqwest::Error),
+    #[error("File I/O error occurred")]
+    FileIOError(#[from] std::io::Error),
 }
 
 #[derive(Deserialize)]
@@ -45,7 +47,7 @@ pub async fn create(
     files: Vec<String>,
     is_public: bool,
     description: Option<String>,
-) -> Result<Gist, Box<dyn std::error::Error>> {
+) -> Result<Gist, Error> {
     #[derive(Serialize)]
     struct CreateGistFilePayload {
         content: String,
@@ -60,17 +62,24 @@ pub async fn create(
 
     let mut payload_map = std::collections::HashMap::new();
     for fp in files {
-        let mut file = std::fs::File::open(&fp)?;
+        let file = std::fs::File::open(&fp).map_err(Error::FileIOError);
+        if let Err(e) = file {
+            return Err(e);
+        }
         let mut gist_data = String::new();
-        file.read_to_string(&mut gist_data)?;
+        match file
+            .unwrap()
+            .read_to_string(&mut gist_data)
+            .map_err(Error::FileIOError)
+        {
+            Err(e) => return Err(e),
+            _ => {}
+        };
         payload_map.insert(fp, CreateGistFilePayload { content: gist_data });
     }
 
     let payload = CreateGistPayload {
-        description: match description {
-            Some(d) => d,
-            None => String::from(""),
-        },
+        description: description.unwrap_or(String::new()),
         public: is_public,
         files: payload_map,
     };
@@ -84,11 +93,14 @@ pub async fn create(
         .header("user-agent", "gstm")
         .header("authorization", format!("token {}", token));
 
-    let resp = req.send().await?;
+    let res = req.send().await?;
 
-    let json = resp.json::<Gist>().await?;
-
-    Ok(json)
+    match res.status() {
+        reqwest::StatusCode::OK => res.json::<Gist>().await.map_err(Error::RequestError),
+        s => Err(Error::APIError {
+            status: format!("{} {}", s.as_str(), s.canonical_reason().unwrap_or("")),
+        }),
+    }
 }
 
 pub async fn list(
