@@ -3,7 +3,7 @@ use std::io::prelude::*;
 
 use chrono::DateTime;
 use clap::{crate_authors, crate_version, App, Arg, ArgMatches, SubCommand};
-
+use github_auth::{Authenticator, Scope};
 use log;
 
 use gstm;
@@ -116,8 +116,14 @@ async fn handle_create_command(sc: &clap::ArgMatches<'_>) {
     let files: Vec<String> = sc.values_of("files").unwrap().map(String::from).collect();
     let is_public: bool = sc.is_present("private");
     let description: Option<String> = sc.value_of("description").map(|x| x.to_string()).take();
+    // Collect GitHub Auth token
+    let auth = Authenticator::builder("gstm".into())
+        .scope(Scope::Gist)
+        .build();
+    let token = auth.auth().unwrap();
+    log::info!("Token stored at {:?}", auth.location());
     // Process parsed input
-    let res: Result<gstm::Gist, _> = gstm::create(files, is_public, description).await;
+    let res = gstm::create(files, is_public, description, token.into_string()).await;
     // Print output
     match res {
         Ok(value) => println!("Gist available at {}", value.html_url.unwrap()),

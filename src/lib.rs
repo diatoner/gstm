@@ -47,6 +47,7 @@ pub async fn create(
     files: Vec<String>,
     is_public: bool,
     description: Option<String>,
+    token: String,
 ) -> Result<Gist, Error> {
     #[derive(Serialize)]
     struct CreateGistFilePayload {
@@ -86,7 +87,6 @@ pub async fn create(
 
     let url: &str = "https://api.github.com/gists";
     let client = reqwest::Client::new();
-    let token = "56122920292a664576ebd5ded0e381ba88dc7ea0";
     let req = client
         .post(url)
         .json(&payload)
@@ -95,11 +95,13 @@ pub async fn create(
 
     let res = req.send().await?;
 
-    match res.status() {
-        reqwest::StatusCode::OK => res.json::<Gist>().await.map_err(Error::RequestError),
-        s => Err(Error::APIError {
+    let s = res.status();
+    if s.is_success() {
+        res.json::<Gist>().await.map_err(Error::RequestError)
+    } else {
+        Err(Error::APIError {
             status: format!("{} {}", s.as_str(), s.canonical_reason().unwrap_or("")),
-        }),
+        })
     }
 }
 
