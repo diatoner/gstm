@@ -47,15 +47,15 @@ pub async fn create(
     description: Option<String>,
 ) -> Result<Gist, Box<dyn std::error::Error>> {
     #[derive(Serialize)]
-    pub struct CreateGistFilePayload {
-        pub content: String,
+    struct CreateGistFilePayload {
+        content: String,
     }
 
     #[derive(Serialize)]
-    pub struct CreateGistPayload {
-        pub description: String,
-        pub public: bool,
-        pub files: std::collections::HashMap<String, CreateGistFilePayload>,
+    struct CreateGistPayload {
+        description: String,
+        public: bool,
+        files: std::collections::HashMap<String, CreateGistFilePayload>,
     }
 
     let mut payload_map = std::collections::HashMap::new();
