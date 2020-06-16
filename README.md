@@ -16,14 +16,10 @@ gstm create \
   README.md
 ```
 
-Plus, it's a project to brush up on my Rust.
-
 ### Foundation
 
 `gstm` is based on the work at [alicanerdogan/gistr](https://github.com/alicanerdogan/gistr),
-which is a great tool. As it stands, I'd like to build on this tool
-while incorporating other packages, perhaps including:
- - [github_auth](https://crates.io/crates/github_auth)
+which is a great tool. 
 
 ### Installation
 
