@@ -1,0 +1,23 @@
+[package]
+name = "gstm-cli"
+version = "0.1.0"
+authors = ["Tom <tom@fourzerofour.pw>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+gstm_core = { path = "../gstm_core" }
+futures = "0.3"
+tokio = { version = "0.2", features = ["full"] }
+clap = "2.33.1"
+chrono = "0.4.11"
+log = "0.4"
+loggerv = "0.7.2"
+term_size = "0.3.2"
+directories = "2.0.2"
+reqwest = { version = "0.10", features = ["json"] }
+
+[[bin]]
+name = "gstm"
+path = "src/main.rs"

@@ -1,21 +1,5 @@
-[package]
-name = "gstm"
-version = "0.1.0"
-authors = ["four0000four <tom@fourzerofour.pw>"]
-edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-futures = "0.3"
-reqwest = { version = "0.10", features = ["json"] }
-tokio = { version = "0.2", features = ["full"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-clap = "2.33.1"
-chrono = "0.4.11"
-log = "0.4"
-loggerv = "0.7.2"
-term_size = "0.3.2"
-thiserror = "1.0"
-directories = "2.0.2"
+[workspace]
+members = [
+  "gstm_core",
+  "gstm_cli",
+]

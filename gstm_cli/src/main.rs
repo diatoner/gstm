@@ -125,7 +125,7 @@ async fn handle_create_command(sc: &clap::ArgMatches<'_>) {
     token = token.trim().to_string();
     log::info!("Token is {}", token);
     // Process parsed input
-    let res = gstm::create(files, is_public, description, token).await;
+    let res = gstm_core::create(files, is_public, description, token).await;
     // Print output
     match res {
         Ok(value) => println!("Gist available at {}", value.html_url.unwrap()),
@@ -141,7 +141,7 @@ async fn handle_list_command(sc: &clap::ArgMatches<'_>) {
         .map(|x| DateTime::parse_from_rfc3339(x).unwrap())
         .take();
     // Process input
-    let gists = gstm::list(user, since).await;
+    let gists = gstm_core::list(user, since).await;
     // Show output
     match gists {
         Ok(gs) => {
@@ -187,7 +187,7 @@ async fn handle_get_command(sc: &ArgMatches<'_>) {
     let no_content = sc.is_present("no-content");
     let delimiter = sc.value_of("delimiter").unwrap_or("\n");
 
-    let gist = gstm::get(id.clone()).await;
+    let gist = gstm_core::get(id.clone()).await;
     if let Err(e) = gist {
         log::error!("Failed to get {}: {}", id, e);
         return;
