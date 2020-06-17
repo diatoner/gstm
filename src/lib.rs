@@ -68,13 +68,12 @@ pub async fn create(
             return Err(e);
         }
         let mut gist_data = String::new();
-        match file
+        if let Err(e) = file
             .unwrap()
             .read_to_string(&mut gist_data)
             .map_err(Error::FileIOError)
         {
-            Err(e) => return Err(e),
-            _ => {}
+            return Err(e);
         };
         payload_map.insert(fp, CreateGistFilePayload { content: gist_data });
     }

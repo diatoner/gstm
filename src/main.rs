@@ -5,9 +5,6 @@ use std::io::prelude::*;
 use chrono::DateTime;
 use clap::{crate_authors, crate_version, App, Arg, ArgMatches, SubCommand};
 use directories::ProjectDirs;
-use log;
-
-use gstm;
 
 #[tokio::main]
 async fn main() {
@@ -220,9 +217,10 @@ async fn handle_get_command(sc: &ArgMatches<'_>) {
             file.language.as_ref().unwrap(),
             file.size
         );
-        let body = match no_content {
-            false => file.content.as_ref().unwrap(),
-            true => "",
+        let body = if no_content {
+            ""
+        } else {
+            file.content.as_ref().unwrap()
         };
         let output = format!("{}\n{}{}", header, body, delimiter);
         match fs_dest {
