@@ -79,7 +79,7 @@ pub async fn create(
     }
 
     let payload = CreateGistPayload {
-        description: description.unwrap_or(String::new()),
+        description: description.unwrap_or_default(),
         public: is_public,
         files: payload_map,
     };
