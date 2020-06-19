@@ -1,10 +1,10 @@
-use std::fs::create_dir_all;
 use std::fs::File;
 use std::io::prelude::*;
 
 use chrono::DateTime;
 use clap::{crate_authors, crate_version, App, Arg, ArgMatches, SubCommand};
-use directories::ProjectDirs;
+
+use gstm_cli::auth;
 
 #[tokio::main]
 async fn main() {
@@ -110,23 +110,19 @@ async fn handle_matches(matches: ArgMatches<'_>) {
 }
 
 async fn handle_create_command(sc: &clap::ArgMatches<'_>) {
-    // Parse input
     let files: Vec<String> = sc.values_of("files").unwrap().map(String::from).collect();
     let is_public: bool = sc.is_present("private");
     let description: Option<String> = sc.value_of("description").map(|x| x.to_string()).take();
-    // Collect GitHub Auth token from cache
-    let project_folder = ProjectDirs::from("", "", "gstm").unwrap();
-    let cache_folder = project_folder.cache_dir();
-    create_dir_all(cache_folder).unwrap();
-    let token_file_path = cache_folder.join("token");
-    let mut token_file = File::open(token_file_path).unwrap();
-    let mut token = String::new();
-    token_file.read_to_string(&mut token).unwrap();
-    token = token.trim().to_string();
-    log::info!("Token is {}", token);
-    // Process parsed input
+
+    log::info!("Retrieving cached auth token");
+    let token = match auth::get_cached_token() {
+        Some(t) => t,
+        None => auth::get_new_token().unwrap_or(String::new()),
+    };
+
+    log::info!("Performing API request");
     let res = gstm_core::create(files, is_public, description, token).await;
-    // Print output
+
     match res {
         Ok(value) => println!("Gist available at {}", value.html_url.unwrap()),
         Err(e) => log::error!("Gist creation failed: {:?}", e),
