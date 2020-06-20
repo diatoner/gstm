@@ -9,7 +9,7 @@ mod auth;
 
 pub async fn handle_create_command(sc: &ArgMatches<'_>) {
     let files: Vec<String> = sc.values_of("files").unwrap().map(String::from).collect();
-    let is_public: bool = sc.is_present("private");
+    let is_public: bool = sc.is_present("public");
     let description: Option<String> = sc.value_of("description").map(|x| x.to_string()).take();
 
     log::info!("Retrieving cached auth token");

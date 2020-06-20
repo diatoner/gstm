@@ -13,10 +13,10 @@ async fn main() {
                 .about("Create a new Gist")
                 .arg(Arg::with_name("files").multiple(true).required(true))
                 .arg(
-                    Arg::with_name("private")
+                    Arg::with_name("public")
                         .short("-p")
-                        .long("--private")
-                        .help("Make your new Gist private"),
+                        .long("--public")
+                        .help("Make your new Gist public"),
                 )
                 .arg(
                     Arg::with_name("description")

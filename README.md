@@ -10,7 +10,7 @@ I wanted a composable tool to ease work from the terminal:
 
 ```bash
 gstm create \
-  --private \
+  --public \
   --description "Utility script to save the world" \
   save_world.sh \
   README.md
