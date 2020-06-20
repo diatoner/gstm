@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::io::prelude::*;
 
 use chrono::{DateTime, FixedOffset};
-use reqwest::Client;
+use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -41,6 +41,19 @@ pub struct Gist {
     pub created_at: Option<String>,
     pub owner: Option<User>,
     pub files: HashMap<String, File>,
+}
+
+pub fn build_headers(token: Option<String>) -> header::HeaderMap {
+    let mut headers = header::HeaderMap::new();
+    headers.insert(header::USER_AGENT, header::HeaderValue::from_static("gstm"));
+    if let Some(t) = token {
+        let token_string = format!("token {}", t);
+        headers.insert(
+            header::AUTHORIZATION,
+            header::HeaderValue::from_str(token_string.as_str()).unwrap(),
+        );
+    };
+    headers
 }
 
 pub async fn create(
@@ -89,8 +102,7 @@ pub async fn create(
     let req = client
         .post(url)
         .json(&payload)
-        .header("user-agent", "gstm")
-        .header("authorization", format!("token {}", token));
+        .headers(build_headers(Some(token)));
 
     let res = req.send().await?;
 
@@ -107,13 +119,14 @@ pub async fn create(
 pub async fn list(
     by_user: Option<String>,
     _since: Option<DateTime<FixedOffset>>,
+    token: Option<String>,
 ) -> Result<Vec<Gist>, Error> {
     let endpoint = match by_user {
         Some(uname) => format!("https://api.github.com/users/{}/gists", uname),
         None => String::from("https://api.github.com/gists/public"),
     };
     let client = Client::new();
-    let req = client.get(endpoint.as_str()).header("user-agent", "gstm");
+    let req = client.get(endpoint.as_str()).headers(build_headers(token));
     let res = req.send().await?;
 
     let s = res.status();
@@ -126,10 +139,10 @@ pub async fn list(
     }
 }
 
-pub async fn get(_id: String) -> Result<Gist, Error> {
+pub async fn get(_id: String, token: Option<String>) -> Result<Gist, Error> {
     let endpoint = format!("https://api.github.com/gists/{}", _id);
     let client = Client::new();
-    let req = client.get(endpoint.as_str()).header("user-agent", "gstm");
+    let req = client.get(endpoint.as_str()).headers(build_headers(token));
     let res = req.send().await?;
     let s = res.status();
     if s.is_success() {
