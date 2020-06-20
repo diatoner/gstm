@@ -17,3 +17,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - `get` subcommand included, with optional [anti-truncation](https://developer.github.com/v3/gists/#truncation) and output to a directory
  - [reqwest](https://crates.io/crates/reqwest) included as a dependency for API interaction
  - [Integration test directory](https://github.com/four0000four/gstm/commit/949c9f47e9132a598d799c0086b04cdc0d0c489a) stubbed
+ - Cross-platform authorization token caching, thanks to [directories](https://github.com/dirs-dev/directories-rs)
