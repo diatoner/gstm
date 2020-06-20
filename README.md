@@ -2,7 +2,7 @@
 
 The Gist Manipulator
 
-[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Ffour0000four%2Fgstm%2Fbadge&style=popout)](https://actions-badge.atrox.dev/four0000four/gstm/goto)
+![Rust](https://github.com/four0000four/gstm/workflows/Rust/badge.svg)
 
 ### What is it?
 
