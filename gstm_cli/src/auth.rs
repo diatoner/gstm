@@ -1,5 +1,4 @@
 use directories::ProjectDirs;
-use log;
 use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{prelude::*, stdin, stdout};
 use std::path::PathBuf;
@@ -7,8 +6,7 @@ use std::path::PathBuf;
 pub fn get_token_cache_path() -> PathBuf {
     let project_folder = ProjectDirs::from("", "", "gstm").unwrap();
     let cache_folder = project_folder.cache_dir();
-    let token_file_path = cache_folder.join("token");
-    token_file_path
+    cache_folder.join("token")
 }
 
 pub fn get_cached_token() -> Option<String> {

@@ -1,7 +1,5 @@
 use chrono::DateTime;
 use clap::ArgMatches;
-use gstm_core;
-use log;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -15,7 +13,7 @@ pub async fn handle_create_command(sc: &ArgMatches<'_>) {
     log::info!("Retrieving cached auth token");
     let token = match auth::get_cached_token() {
         Some(t) => t,
-        None => auth::get_new_token().unwrap_or(String::new()),
+        None => auth::get_new_token().unwrap_or_default(),
     };
 
     log::info!("Performing API request");
