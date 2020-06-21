@@ -6,6 +6,21 @@ use reqwest::{header, Client};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+#[cfg(test)]
+fn get_api_endpoint() -> String {
+    std::env::var("_gstm_mock_api_endpoint").unwrap()
+}
+
+#[cfg(test)]
+fn set_api_endpoint(uri: String) {
+    std::env::set_var("_gstm_mock_api_endpoint", uri.as_str())
+}
+
+#[cfg(not(test))]
+fn get_api_endpoint() -> String {
+    "https://api.github.com".to_string()
+}
+
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("GitHub responded with a HTTP status of {status}")]
@@ -53,6 +68,7 @@ pub fn build_headers(token: Option<String>) -> header::HeaderMap {
             header::HeaderValue::from_str(token_string.as_str()).unwrap(),
         );
     };
+    log::debug!("Headers build for request: {:?}", headers);
     headers
 }
 
@@ -97,10 +113,10 @@ pub async fn create(
         files: payload_map,
     };
 
-    let url: &str = "https://api.github.com/gists";
+    let url = format!("{}/gists", get_api_endpoint());
     let client = reqwest::Client::new();
     let req = client
-        .post(url)
+        .post(url.as_str())
         .json(&payload)
         .headers(build_headers(Some(token)));
 
@@ -122,8 +138,8 @@ pub async fn list(
     token: Option<String>,
 ) -> Result<Vec<Gist>, Error> {
     let endpoint = match by_user {
-        Some(uname) => format!("https://api.github.com/users/{}/gists", uname),
-        None => String::from("https://api.github.com/gists/public"),
+        Some(uname) => format!("{}/users/{}/gists", get_api_endpoint(), uname),
+        None => format!("{}/gists/public", get_api_endpoint()),
     };
     let client = Client::new();
     let req = client.get(endpoint.as_str()).headers(build_headers(token));
@@ -140,7 +156,8 @@ pub async fn list(
 }
 
 pub async fn get(_id: String, token: Option<String>) -> Result<Gist, Error> {
-    let endpoint = format!("https://api.github.com/gists/{}", _id);
+    let endpoint = format!("{}/gists/{}", get_api_endpoint(), _id);
+    log::debug!("Requesting {:?}", endpoint);
     let client = Client::new();
     let req = client.get(endpoint.as_str()).headers(build_headers(token));
     let res = req.send().await?;
@@ -151,5 +168,39 @@ pub async fn get(_id: String, token: Option<String>) -> Result<Gist, Error> {
         Err(Error::APIError {
             status: format!("{} {}", s.as_str(), s.canonical_reason().unwrap_or("")),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::File;
+    use std::io::prelude::*;
+    use wiremock::matchers::{method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    #[tokio::test]
+    async fn test_get() {
+        // Test parameters
+        let id = "aa5a315d61ae9438b18d".to_string();
+
+        // Expected output
+        let mut file = File::open("tests/files/get.json").unwrap();
+        let mut content = Vec::new();
+        file.read_to_end(&mut content).unwrap();
+
+        // Mock server
+        let mock_server = MockServer::start().await;
+        super::set_api_endpoint(mock_server.uri());
+        let template = ResponseTemplate::new(200).set_body_raw(content, "application/json");
+        println!("{:?}", template);
+
+        Mock::given(method("GET"))
+            .and(path(format!("/gists/{}", id)))
+            .respond_with(template)
+            .mount(&mock_server)
+            .await;
+
+        // API call
+        super::get(id, None).await.unwrap();
     }
 }
