@@ -37,22 +37,23 @@ git clone https://github.com/four0000four/gstm.git && \
 
 ```
 gstm 0.1.0
-four0000four <tom@fourzerofour.pw>
+Tom <tom@fourzerofour.pw>
 Gist manipulator
 
 USAGE:
-gstm [FLAGS] [SUBCOMMAND]
+    gstm [FLAGS] [SUBCOMMAND]
 
 FLAGS:
--h, --help         Prints help information
--V, --version      Prints version information
--v, --verbosity    Sets the level of verbosity
+    -h, --help         Prints help information
+    -V, --version      Prints version information
+    -v, --verbosity    Sets the level of verbosity
 
 SUBCOMMANDS:
-create    Create a new Gist
-get       Retrieve the content of a single Gist
-help      Prints this message or the help of the given subcommand(s)
-list      Retrieve a listing of Gists
+    create    Create a new Gist
+    fork      Fork a Gist to make your own edits
+    get       Retrieve the content of a single Gist
+    help      Prints this message or the help of the given subcommand(s)
+    list      Retrieve a listing of Gists
 ```
 
 This is the output of `gstm --help`. Each subcommand has additional
