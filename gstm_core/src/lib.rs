@@ -171,11 +171,28 @@ pub async fn get(_id: String, token: Option<String>) -> Result<Gist, Error> {
     }
 }
 
+pub async fn fork(id: String, token: String) -> Result<Gist, Error> {
+    let endpoint = format!("{}/gists/{}/fork", get_api_endpoint(), id);
+    let client = Client::new();
+    let req = client
+        .post(endpoint.as_str())
+        .headers(build_headers(Some(token)));
+    let res = req.send().await?;
+    let s = res.status();
+    if s.is_success() {
+        res.json::<Gist>().await.map_err(Error::RequestError)
+    } else {
+        Err(Error::APIError {
+            status: format!("{} {}", s.as_str(), s.canonical_reason().unwrap_or("")),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::fs::File;
     use std::io::prelude::*;
-    use wiremock::matchers::{method, path};
+    use wiremock::matchers::{header, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[tokio::test]
@@ -202,5 +219,32 @@ mod tests {
 
         // API call
         super::get(id, None).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_fork() {
+        // Test parameters
+        let id = "aa5a315d61ae9438b18d".to_string();
+        let token = "e72e16c7e42f292c6912e7710c838347ae178b4a".to_string();
+
+        // Expected output
+        let mut file = File::open("tests/files/fork.json").unwrap();
+        let mut content = Vec::new();
+        file.read_to_end(&mut content).unwrap();
+
+        // Mock server
+        let mock_server = MockServer::start().await;
+        super::set_api_endpoint(mock_server.uri());
+        let template = ResponseTemplate::new(200).set_body_raw(content, "application/json");
+
+        Mock::given(method("POST"))
+            .and(path(format!("/gists/{}/fork", id)))
+            .and(header("authorization", format!("token {}", token).as_str()))
+            .respond_with(template)
+            .mount(&mock_server)
+            .await;
+
+        // API call
+        super::fork(id, token).await.unwrap();
     }
 }

@@ -135,3 +135,21 @@ pub async fn handle_get_command(sc: &ArgMatches<'_>) {
         }
     }
 }
+
+pub async fn handle_fork_command(sc: &ArgMatches<'_>) {
+    let id = sc.value_of("id").map(String::from).unwrap();
+
+    log::info!("Retrieving cached auth token");
+    let token = match auth::get_cached_token() {
+        Some(t) => t,
+        None => auth::get_new_token().unwrap_or_default(),
+    };
+
+    log::info!("Performing API request");
+    let res = gstm_core::fork(id, token).await;
+
+    match res {
+        Ok(value) => println!("Fork available at {}", value.html_url.unwrap()),
+        Err(e) => log::error!("Fork failed: {:?}", e),
+    };
+}

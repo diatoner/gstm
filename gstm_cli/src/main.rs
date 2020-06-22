@@ -1,6 +1,8 @@
 use clap::{crate_authors, crate_version, App, Arg, ArgMatches, SubCommand};
 
-use gstm_cli::{handle_create_command, handle_get_command, handle_list_command};
+use gstm_cli::{
+    handle_create_command, handle_fork_command, handle_get_command, handle_list_command,
+};
 
 #[tokio::main]
 async fn main() {
@@ -81,6 +83,13 @@ async fn main() {
                     .short("-c")
                     .long("--no-content")
                     .help("Hide the text of any file from output; meta only")
+                ),
+            SubCommand::with_name("fork")
+                .about("Fork a Gist to make your own edits")
+                .arg(
+                    Arg::with_name("id")
+                    .required(true)
+                    .help("The ID of the Gist you want to fork")
                 )
         ])
         .arg(Arg::with_name("verbosity")
@@ -101,6 +110,7 @@ async fn handle_matches(matches: ArgMatches<'_>) {
         ("create", Some(sc)) => handle_create_command(sc).await,
         ("list", Some(sc)) => handle_list_command(sc).await,
         ("get", Some(sc)) => handle_get_command(sc).await,
+        ("fork", Some(sc)) => handle_fork_command(sc).await,
         _ => {}
     }
 }
